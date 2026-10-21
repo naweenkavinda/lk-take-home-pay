@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Sri Lankan salary calculator: APIT, EPF and ETF, the employee's real take-home pay and the employer's true cost, with every formula tied to the law.">
+<title>Sri Lanka Take-Home Pay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: two-pane workbench — pay inputs on the left, a printed payslip and employer-cost ledger on the right, law & formulas below. */
+:root{
+  --bg:#EEF0EE; --surface:#FFFFFF; --sunk:#F5F6F4; --ink:#1A1F1D; --muted:#5B6460; --line:#D6DBD7;
+  --accent:#8D153A; --accent-soft:#F4E3E8; --saffron:#B35F00;
+  --good:#1D7349; --warn:#9A5B00; --bad:#B3261E; --info:#2D5F7A;
+  --seg-net:#1D7349; --seg-apit:#8D153A; --seg-epfee:#C77A1A; --seg-epfer:#2D6F86; --seg-etf:#6957A8; --seg-grat:#7C8580; --seg-ncb:#B9C0BC;
+  --f-display:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111413; --surface:#1A1E1D; --sunk:#151918; --ink:#E7EBE9; --muted:#9AA39F; --line:#2D3431;
+  --accent:#E27A96; --accent-soft:#3A1F28; --saffron:#EFA24E;
+  --good:#5CC08B; --warn:#E3A548; --bad:#F2766B; --info:#79B4D3;
+  --seg-net:#4FB07E; --seg-apit:#D9668A; --seg-epfee:#E39A45; --seg-epfer:#5AA9C6; --seg-etf:#9E8EE0; --seg-grat:#8A938F; --seg-ncb:#4A524F;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111413; --surface:#1A1E1D; --sunk:#151918; --ink:#E7EBE9; --muted:#9AA39F; --line:#2D3431;
+  --accent:#E27A96; --accent-soft:#3A1F28; --saffron:#EFA24E;
+  --good:#5CC08B; --warn:#E3A548; --bad:#F2766B; --info:#79B4D3;
+  --seg-net:#4FB07E; --seg-apit:#D9668A; --seg-epfee:#E39A45; --seg-epfer:#5AA9C6; --seg-etf:#9E8EE0; --seg-grat:#8A938F; --seg-ncb:#4A524F;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:22px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4.2vw,42px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:62ch;margin:8px 0 0}
+.law-chip{font-family:var(--f-mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:6px 10px;background:var(--surface)}
+.law-chip b{color:var(--ink);font-weight:600}
+
+.tabs{display:flex;gap:4px;margin:0 0 18px;border-bottom:1px solid var(--line)}
+.tabs button{font:700 15px var(--f-display);letter-spacing:.01em;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:10px 16px 9px;cursor:pointer;margin-bottom:-1px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left}
+.tabs button small{font:400 12px var(--f-body);color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs button:hover{color:var(--ink)}
+.page{display:flex;flex-direction:column;gap:18px;min-width:0}
+.mini{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:13.5px;font-variant-numeric:tabular-nums}
+.mini .a{font-family:var(--f-mono);text-align:right}
+.mini .tot{border-top:1px solid var(--line);padding-top:5px;font-weight:600}
+.inline-field{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.inline-field label{font-size:13.5px}
+.inline-field input{width:110px}
+.grid{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Inputs */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.inputs{padding:18px 18px 8px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.presets button{font:500 12.5px var(--f-body);border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
+.presets button:hover{border-color:var(--accent);color:var(--accent)}
+fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:14px 0 10px}
+fieldset:first-of-type{border-top:0;padding-top:4px}
+legend{font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.02em;padding:0 0 8px;display:flex;gap:8px;align-items:baseline}
+legend small{font:400 12px var(--f-body);color:var(--muted)}
+.field{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:4px 12px;align-items:center;margin-bottom:9px}
+.field.full{grid-template-columns:minmax(0,1fr)}
+.field label{font-size:13.5px}
+.field .hint{grid-column:1/-1;font-size:12px;color:var(--muted);margin-top:-2px}
+.money{position:relative}
+.money::before{content:"Rs";position:absolute;left:9px;top:50%;transform:translateY(-50%);font:500 12px var(--f-mono);color:var(--muted);pointer-events:none}
+input[type=number],select{width:100%;font:500 14px var(--f-mono);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:7px 9px;font-variant-numeric:tabular-nums}
+.money input{padding-left:32px;text-align:right}
+input[type=number].plain{text-align:right}
+select{font-family:var(--f-body);font-size:13.5px}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:2px 0 10px}
+.check input{margin-top:3px;accent-color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .field{grid-template-columns:minmax(0,1fr)}
+.calc-note{font:12px var(--f-mono);color:var(--muted);background:var(--sunk);border-radius:4px;padding:6px 8px;margin:-2px 0 10px}
+
+/* Results */
+.results{display:flex;flex-direction:column;gap:18px;min-width:0}
+.headline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.headline > div{padding:16px 18px;border-left:1px solid var(--line);min-width:0}
+.headline > div:first-child{border-left:0;background:var(--accent-soft)}
+.headline .k{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.headline .v{font:700 clamp(20px,2.6vw,28px) var(--f-mono);font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
+.headline > div:first-child .v{color:var(--accent)}
+.headline .s{font-size:12.5px;color:var(--muted)}
+@media (max-width:560px){.headline{grid-template-columns:minmax(0,1fr)}.headline > div{border-left:0;border-top:1px solid var(--line)}.headline > div:first-child{border-top:0}}
+
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:1100px){.split{grid-template-columns:minmax(0,1fr)}}
+
+.slip{position:relative;padding:22px 20px 18px;font-family:var(--f-mono);font-size:13px}
+.slip::before{content:"";position:absolute;left:0;right:0;top:-1px;height:8px;background:radial-gradient(circle at 6px 0,var(--bg) 4px,transparent 4.5px) 0 0/12px 8px repeat-x}
+.slip h2,.ledger h2{font-family:var(--f-display);font-size:15px;font-weight:700;margin:0 0 2px;letter-spacing:.02em}
+.slip .sub,.ledger .sub{font:12px var(--f-body);color:var(--muted);margin:0 0 12px}
+.rows{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;font-variant-numeric:tabular-nums}
+.rows .lbl{color:var(--ink);overflow-wrap:anywhere}
+.rows .lbl em{font-style:normal;color:var(--muted);font-size:11.5px}
+.rows .amt{text-align:right;white-space:nowrap}
+.rows .sec{grid-column:1/-1;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-top:10px;padding-bottom:3px;border-bottom:1px dashed var(--line)}
+.rows .tot{border-top:1px solid var(--ink);padding-top:4px;margin-top:3px;font-weight:600}
+.rows .neg{color:var(--bad)}
+.rows .muted{color:var(--muted)}
+.netline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:14px;padding:10px 12px;border:2px solid var(--ink);border-radius:4px;font-weight:600}
+.netline span:last-child{font-size:18px}
+
+.ledger{padding:20px}
+.bar{display:flex;height:26px;border-radius:4px;overflow:hidden;margin:6px 0 10px;background:var(--sunk)}
+.bar i{display:block;height:100%;min-width:2px}
+.legend{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 12px;font-size:13px;font-variant-numeric:tabular-nums}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;vertical-align:-1px}
+.legend .a{font-family:var(--f-mono);text-align:right}
+.legend .p{font-family:var(--f-mono);text-align:right;color:var(--muted)}
+.legend .tot{border-top:1px solid var(--line);padding-top:5px;font-weight:600}
+
+.block{padding:20px}
+.block h2{font-family:var(--f-display);font-size:17px;font-weight:700;margin:0 0 4px}
+.block .sub{color:var(--muted);font-size:13px;margin:0 0 12px;max-width:75ch}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td{font-family:var(--f-mono)}
+tr.on td{background:var(--accent-soft)}
+tr.off td{color:var(--muted)}
+.meter{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden;min-width:70px}
+.meter i{display:block;height:100%;background:var(--accent)}
+
+.checks{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.checks li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;font-size:13.5px;padding:9px 12px;border-radius:6px;background:var(--sunk)}
+.pill{font:600 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid currentColor;white-space:nowrap;margin-top:1px}
+.pill.good{color:var(--good)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.info{color:var(--info)}
+.checks small{display:block;color:var(--muted);font-size:12px}
+
+.reverse{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.reverse .money{width:180px}
+.btn{font:600 13.5px var(--f-body);background:var(--accent);color:var(--surface);border:0;border-radius:5px;padding:8px 14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:hover{filter:brightness(1.08)}
+.rev-out{font-size:13.5px;color:var(--muted);min-height:1.5em}
+.rev-out b{color:var(--ink);font-family:var(--f-mono)}
+
+.law{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.law{grid-template-columns:minmax(0,1fr)}}
+.law article{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--sunk);min-width:0}
+.law h3{font-family:var(--f-display);font-size:14.5px;margin:0 0 6px}
+.law p,.law li{font-size:13px;margin:0 0 6px}
+.law ul{margin:0;padding-left:18px}
+code,.formula{font-family:var(--f-mono);font-size:12.5px}
+.formula{display:block;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:8px 10px;margin:6px 0 8px;overflow-x:auto;white-space:pre;line-height:1.55}
+.cite{font-size:12px;color:var(--muted)}
+.cite a{color:var(--info)}
+a{color:var(--info)}
+.sources ol{margin:0;padding-left:22px;columns:2;column-gap:28px;font-size:13px}
+@media (max-width:760px){.sources ol{columns:1}}
+.sources li{break-inside:avoid;margin-bottom:6px}
+.disclaimer{font-size:12.5px;color:var(--muted);border-left:3px solid var(--saffron);padding:6px 12px;margin-top:4px}
+.stack{display:flex;flex-direction:column;gap:18px;margin-top:22px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:flex-basis .25s ease}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Sri Lanka payroll · Y/A 2026/27</p>
+      <h1>Take-home pay &amp; true employer cost</h1>
+      <p class="lede">Enter a monthly salary to see APIT, EPF and ETF, what the employee actually takes home, and what the job really costs the employer. The formulas follow the IRD's published APIT tables and the EPF, ETF, Gratuity and Shop &amp; Office Acts.</p>
+    </div>
+    <div class="law-chip">Rules in force: <b>1 Apr 2025 onwards</b><br>Relief <b>Rs 150,000/mo</b> · Min. wage <b>Rs 30,000</b></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="View">
+    <button type="button" role="tab" id="tab-employee" aria-controls="page-employee" aria-selected="true" data-tab="employee">Employee<small>What I take home</small></button>
+    <button type="button" role="tab" id="tab-employer" aria-controls="page-employer" aria-selected="false" data-tab="employer">Employer<small>What this hire costs</small></button>
+  </nav>
+
+  <div class="grid">
+    <!-- INPUTS -->
+    <form class="panel inputs" id="form" autocomplete="off">
+      <div class="presets" aria-label="Example salaries">
+        <button type="button" data-preset="min">Minimum wage</button>
+        <button type="button" data-preset="mid">Rs 250k executive</button>
+        <button type="button" data-preset="senior">Rs 600k manager + car</button>
+        <button type="button" data-preset="bonus">Bonus month</button>
+      </div>
+
+      <fieldset>
+        <legend>Monthly pay <small>cash, before deductions</small></legend>
+        <div class="field"><label for="basic">Basic salary</label><div class="money"><input type="number" id="basic" min="0" step="500" value="220000"></div></div>
+        <div class="field"><label for="cola">Cost-of-living allowance</label><div class="money"><input type="number" id="cola" min="0" step="500" value="0"></div>
+          <span class="hint">Always counts for EPF/ETF and for the overtime rate.</span></div>
+        <div class="field"><label for="fixed">Fixed monthly allowances</label><div class="money"><input type="number" id="fixed" min="0" step="500" value="30000"></div></div>
+        <label class="check"><input type="checkbox" id="fixedEpf" checked> <span>Fixed allowances count for EPF/ETF <small style="color:var(--muted)">(usual practice: "similar allowances", EPF Act s.47)</small></span></label>
+        <div class="field"><label for="other">Other taxable pay not in EPF</label><div class="money"><input type="number" id="other" min="0" step="500" value="0"></div>
+          <span class="hint">e.g. travelling or incentive allowances outside the EPF definition.</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Overtime &amp; one-off pay</legend>
+        <div class="two">
+          <div class="field"><label for="otHours">Overtime hours this month</label><input type="number" class="plain" id="otHours" min="0" step="1" value="0"></div>
+          <div class="field"><label for="otRate">Overtime rate</label>
+            <select id="otRate"><option value="1.5">1.5× (normal OT or Poya day)</option><option value="2">2× (public holiday)</option></select></div>
+        </div>
+        <div class="calc-note" id="otNote">Hourly rate = (basic + COLA) ÷ 240</div>
+        <div class="field"><label for="bonus">Bonus / lump sum paid this month</label><div class="money"><input type="number" id="bonus" min="0" step="1000" value="0"></div>
+          <span class="hint">Taxed with APIT Table 02. Not EPF-liable.</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Benefits in kind <small>taxed, not paid in cash</small></legend>
+        <div class="field full"><label for="vehicle">Company vehicle (some private use)</label>
+          <select id="vehicle">
+            <option value="0">None</option>
+            <option value="3000">Motorcycle without fuel — Rs 3,000</option>
+            <option value="5000">Motorcycle with fuel — Rs 5,000</option>
+            <option value="20000">Car only — Rs 20,000</option>
+            <option value="40000">Car + fuel — Rs 40,000</option>
+            <option value="50000">Car + fuel + driver — Rs 50,000</option>
+          </select></div>
+        <div class="field full"><label for="housing">Employer-provided housing</label>
+          <select id="housing">
+            <option value="0">None</option>
+            <option value="0.125">Rated area — 12.5% of salary</option>
+            <option value="0.10">Unrated area — 10% of salary</option>
+            <option value="0.075">Estate bungalow — 7.5% of salary</option>
+          </select><span class="hint">IRD caps this at the employer's cost or the market value if lower, less any rent you pay.</span></div>
+        <div class="field"><label for="phone">Phone bill paid by employer</label><div class="money"><input type="number" id="phone" min="0" step="500" value="0"></div>
+          <span class="hint">50% of the bill is taxable.</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tax status</legend>
+        <div class="field full"><label for="residency">Residence</label>
+          <select id="residency">
+            <option value="res">Resident (183+ days in Sri Lanka)</option>
+            <option value="nrc">Non-resident Sri Lankan citizen</option>
+            <option value="nrnc">Non-resident foreign national</option>
+          </select></div>
+        <div class="field full"><label for="job">This job is my</label>
+          <select id="job"><option value="primary">Primary employment</option><option value="secondary">Secondary employment</option></select></div>
+        <div id="secBox" hidden>
+          <div class="field"><label for="primaryPay">Monthly pay from primary job</label><div class="money"><input type="number" id="primaryPay" min="0" step="1000" value="200000"></div></div>
+          <label class="check"><input type="checkbox" id="secDecl" checked> <span>Secondary-employment declaration given to this employer</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>EPF, ETF &amp; gratuity</legend>
+        <label class="check"><input type="checkbox" id="epfOn" checked> <span>Covered by EPF/ETF</span></label>
+        <div class="two">
+          <div class="field"><label for="epfEe">Employee EPF %</label><input type="number" class="plain" id="epfEe" min="8" max="50" step="1" value="8"></div>
+          <div class="field"><label for="epfEr">Employer EPF %</label><input type="number" class="plain" id="epfEr" min="12" max="50" step="1" value="12"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="gratOn" checked> <span>Employer has 15+ workers (accrue gratuity in cost)</span></label>
+        <div class="field"><label for="otherDed">Other deductions (loan, welfare…)</label><div class="money"><input type="number" id="otherDed" min="0" step="500" value="0"></div></div>
+      </fieldset>
+    </form>
+
+    <!-- RESULTS -->
+    <div class="results">
+      <!-- EMPLOYEE PAGE -->
+      <div class="page" id="page-employee" role="tabpanel" aria-labelledby="tab-employee">
+        <div class="headline" aria-live="polite">
+          <div><div class="k">Take-home pay</div><div class="v" id="hNet">–</div><div class="s" id="hNetS"></div></div>
+          <div><div class="k">APIT this month</div><div class="v" id="hTax">–</div><div class="s" id="hTaxS"></div></div>
+          <div><div class="k">Into your EPF &amp; ETF</div><div class="v" id="hSave">–</div><div class="s" id="hSaveS"></div></div>
+        </div>
+
+        <div class="split">
+          <section class="panel slip" aria-label="Payslip">
+            <h2>Payslip</h2>
+            <p class="sub" id="slipSub">Monthly · figures in LKR</p>
+            <div class="rows" id="slipRows"></div>
+            <div class="netline"><span>NET PAY</span><span id="slipNet">–</span></div>
+          </section>
+
+          <section class="panel ledger" aria-label="Retirement savings">
+            <h2>Your retirement savings</h2>
+            <p class="sub">EPF and ETF are your money. They are credited to your member accounts every month, not lost to tax.</p>
+            <div class="mini" id="saveRows"></div>
+            <p class="sub" style="margin-top:12px" id="saveNote"></p>
+          </section>
+        </div>
+
+        <section class="panel block">
+          <h2>Work backwards from a take-home figure</h2>
+          <p class="sub">Finds the basic salary that gives this net pay, keeping every other input as it is.</p>
+          <div class="reverse">
+            <div class="money"><input type="number" id="target" min="0" step="1000" value="200000" aria-label="Target take-home pay"></div>
+            <button type="button" class="btn" id="solve">Find basic salary</button>
+            <button type="button" class="btn ghost" data-copy="employee">Copy payslip</button>
+          </div>
+          <p class="rev-out" id="revOut"></p>
+        </section>
+
+        <section class="panel block">
+          <h2>How your APIT was worked out</h2>
+          <p class="sub" id="bandSub"></p>
+          <div class="tbl-wrap"><table id="bandTbl"></table></div>
+        </section>
+
+        <section class="panel block">
+          <h2>Good to know</h2>
+          <p class="sub">How the tax rules apply to you.</p>
+          <ul class="checks" id="checksEe"></ul>
+        </section>
+      </div>
+
+      <!-- EMPLOYER PAGE -->
+      <div class="page" id="page-employer" role="tabpanel" aria-labelledby="tab-employer" hidden>
+        <div class="headline" aria-live="polite">
+          <div><div class="k">Monthly employer cost</div><div class="v" id="hCost">–</div><div class="s" id="hCostS"></div></div>
+          <div><div class="k">Annual cost</div><div class="v" id="hYear">–</div><div class="s" id="hYearS"></div></div>
+          <div><div class="k">Statutory on-costs</div><div class="v" id="hOn">–</div><div class="s" id="hOnS"></div></div>
+        </div>
+
+        <div class="split">
+          <section class="panel ledger" aria-label="Employer cost">
+            <h2>Where the money goes</h2>
+            <p class="sub">Every rupee the job costs, split by who receives it.</p>
+            <div class="bar" id="costBar" role="img" aria-label="Employer cost split"></div>
+            <div class="legend" id="costLegend"></div>
+            <p class="sub" style="margin-top:12px" id="ledgerNote"></p>
+          </section>
+
+          <section class="panel ledger" aria-label="Payments to make">
+            <h2>Payments to make each month</h2>
+            <p class="sub">What payroll remits, who it goes to, and the legal deadline.</p>
+            <div class="tbl-wrap"><table id="remitTbl"></table></div>
+          </section>
+        </div>
+
+        <section class="panel block">
+          <h2>Gratuity liability</h2>
+          <p class="sub">What you would owe if this employee left today (Payment of Gratuity Act No. 12 of 1983).</p>
+          <div class="inline-field">
+            <label for="years">Completed years of service</label>
+            <input type="number" class="plain" id="years" min="0" max="60" step="1" value="6">
+          </div>
+          <div class="mini" id="gratRows"></div>
+          <p class="sub" style="margin-top:10px" id="gratNote"></p>
+        </section>
+
+        <section class="panel block">
+          <h2>Work backwards from a budget</h2>
+          <p class="sub">Finds the highest basic salary whose total monthly cost (pay, EPF, ETF, gratuity provision and benefits) fits this budget.</p>
+          <div class="reverse">
+            <div class="money"><input type="number" id="budget" min="0" step="5000" value="400000" aria-label="Monthly cost budget"></div>
+            <button type="button" class="btn" id="solveBudget">Find basic salary</button>
+            <button type="button" class="btn ghost" data-copy="employer">Copy cost summary</button>
+          </div>
+          <p class="rev-out" id="budOut"></p>
+        </section>
+
+        <section class="panel block">
+          <h2>Compliance checks</h2>
+          <p class="sub">The legal limits this payslip touches.</p>
+          <ul class="checks" id="checksEr"></ul>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+
+    <section class="panel block">
+      <h2>The law behind each number</h2>
+      <p class="sub">Each formula the calculator uses, with the provision it comes from. Numbers in brackets point to the source list.</p>
+      <div class="law">
+        <article>
+          <h3>APIT on monthly salary (IRD Table 01)</h3>
+          <p>Residents and non-resident citizens get personal relief of Rs 1,800,000 a year (Rs 150,000 a month). Taxable income is then charged at 6%, 18%, 24%, 30% and 36% <a href="#s1">[1]</a>. IRD folds the relief into one formula on gross monthly pay M <a href="#s3">[3]</a>:</p>
+<code class="formula">M ≤ 150,000            → 0
+150,000 – 233,333     → 6%  × M −  9,000
+233,333 – 275,000     → 18% × M − 37,000
+275,000 – 316,667     → 24% × M − 53,500
+316,667 – 358,333     → 30% × M − 72,500
+above 358,333         → 36% × M − 94,000</code>
+          <p class="cite">M includes basic pay, all allowances, overtime and the value of benefits in kind. Employee EPF is <b>not</b> deducted first: "No deduction shall be made" from employment income (IRA s.10(1)(a)) <a href="#s2">[2]</a>.</p>
+        </article>
+        <article>
+          <h3>Bonus and other lump sums (Table 02)</h3>
+          <p>A bonus is taxed on the year as a whole. D is the year's regular pay plus all lump sums. IRD's annual formula is applied to D, and the tax already due on regular pay is subtracted <a href="#s4">[4]</a>:</p>
+<code class="formula">D = 12 × M + bonus
+Tax on bonus = (r × D − K) − 12 × Table01(M)
+r/K: 6%/108,000 · 18%/444,000 · 24%/642,000
+     30%/870,000 · 36%/1,128,000  (D ≤ 1.8M → 0)</code>
+          <p class="cite">IRD's own example gives Rs 36,000: M = 170,000 with a bonus of 600,000. This calculator reproduces it. It assumes the same salary all year and no earlier lump sums.</p>
+        </article>
+        <article>
+          <h3>Foreign nationals and second jobs (Tables 04 &amp; 07)</h3>
+          <p>Non-resident non-citizens get no relief and APIT is their final tax <a href="#s5">[5]</a>:</p>
+<code class="formula">≤ 83,333 → 6%×M · ≤ 125,000 → 18%×M − 10,000
+≤ 166,667 → 24%×M − 17,500 · ≤ 208,333 → 30%×M − 27,500
+above → 36%×M − 40,000</code>
+          <p>Secondary employment is taxed at one flat rate on the whole second salary. The rate depends on primary-job pay and on combined pay: 0%, 6%, 18%, 24%, 30% or 36%. Without a declaration the rate is 36%, and non-residents pay 36% <a href="#s6">[6]</a>.</p>
+        </article>
+        <article>
+          <h3>EPF and ETF</h3>
+<code class="formula">EPF earnings = basic + COLA + similar allowances
+Employee EPF = 8%  × EPF earnings   (deducted)
+Employer EPF = 12% × EPF earnings   (on top)
+Employer ETF = 3%  × EPF earnings   (on top)</code>
+          <p>The rates come from EPF Act s.10(1)–(2) <a href="#s7">[7]</a> and ETF Act s.16(1) <a href="#s8">[8]</a>. "Earnings" (EPF s.47, ETF s.44) covers wages, cost-of-living and similar allowances, holiday pay, meal allowances and commission. Overtime and bonuses are not in that list, so they are left out. There is no ceiling. The employer may not recover its share from pay (EPF s.20, ETF s.30). Its EPF/ETF contributions are not taxable to the employee (IRA s.5) <a href="#s2">[2]</a>.</p>
+        </article>
+        <article>
+          <h3>Overtime (Shop &amp; Office Act)</h3>
+<code class="formula">Hourly rate = (basic + COLA) ÷ 240
+Overtime    = hourly × 1.5 × hours
+Public-holiday work = 2× the daily rate</code>
+          <p>Normal hours are 8 a day and 45 a week (Act s.3). The Shop &amp; Office Regulations cap overtime at 12 hours a week, set the 1.5× minimum and the ÷240 hourly rate, and count only salary plus cost-of-living allowance (and any prescribed allowance) in the base (Regs. 6–9). Work on a public holiday is paid double (s.7(2)) and on a Poya day at 1.5× (s.7B) <a href="#s9">[9]</a>.</p>
+        </article>
+        <article>
+          <h3>Gratuity, minimum wage and benefits</h3>
+<code class="formula">Gratuity = ½ × last monthly salary × completed years
+Monthly accrual shown = (basic + COLA + allowances) ÷ 24</code>
+          <p>Gratuity is owed after 5 years' service by employers with 15 or more workmen. It must be paid within 30 days of leaving (Payment of Gratuity Act s.5–6, s.20) <a href="#s10">[10]</a>. The national minimum wage is Rs 30,000 a month (Rs 1,200 a day) from 1 Jan 2026. The old Rs 3,500 budgetary relief allowance is now merged into wages (Acts No. 9 and No. 10 of 2025, with the new rate set by Act No. 11 of 2025) <a href="#s11">[11]</a><a href="#s12">[12]</a>. Benefit-in-kind values follow IRD SEC/2023/E/02 <a href="#s3">[3]</a>.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel block sources">
+      <h2>Sources</h2>
+      <p class="sub">Primary sources first. Checked 21 October 2026. Budget 2026 (7 Nov 2025) made no change to personal income tax <a href="#s13">[13]</a>. Act No. 11 of 2026 changed filing rules only <a href="#s14">[14]</a>.</p>
+      <ol>
+        <li id="s1">Inland Revenue Act No. 24 of 2017, consolidated to 31 Mar 2025 incl. Amendment Act No. 2 of 2025 — 1st Sch. 1(1D), 5th Sch. — <a href="https://www.ird.gov.lk/en/publications/Acts_Income%20Tax_2017/IRA_Cons_Act_-_2025_Changes.pdf" target="_blank" rel="noopener">ird.gov.lk</a></li>
+        <li id="s2">Same Act — s.5 (employment income, approved-fund exclusion), s.10(1)(a) (no deductions) — <a href="https://www.ird.gov.lk/en/publications/Acts_Income%20Tax_2017/IRA_Cons_Act_-_2025_Changes.pdf" target="_blank" rel="noopener">ird.gov.lk</a></li>
+        <li id="s3">IRD APIT Tax Tables 2025-2026, Table 01 and non-cash benefit values SEC/2023/E/02 — <a href="https://www.ird.gov.lk/en/publications/sitepages/apit_tax_tables.aspx?menuid=1502" target="_blank" rel="noopener">IRD APIT tables page</a> · <a href="https://www.ird.gov.lk/en/publications/APIT_Tax_Tables/2025-2026/Table%20-%201/02.%20APIT_2526_Table_01_Text.pdf" target="_blank" rel="noopener">Table 01 PDF</a></li>
+        <li id="s4">IRD APIT Table 02 (lump sums) and Table 05 (cumulative) — <a href="https://www.ird.gov.lk/en/publications/APIT_Tax_Tables/2025-2026/Table%20-%202/03.%20APIT_2526_Table_02_Text.pdf" target="_blank" rel="noopener">Table 02 PDF</a> · <a href="https://www.ird.gov.lk/en/publications/APIT_Tax_Tables/2025-2026/Table%20-%205/06.%20APIT_2526_Table_05_Text.pdf" target="_blank" rel="noopener">Table 05 PDF</a></li>
+        <li id="s5">IRD APIT Table 04 (non-resident non-citizens) — <a href="https://www.ird.gov.lk/en/publications/APIT_Tax_Tables/2025-2026/Table%20-%204/05.%20APIT_2526_Table_04_Text.pdf" target="_blank" rel="noopener">Table 04 PDF</a></li>
+        <li id="s6">IRD APIT Table 07 (secondary employment, revised Sep 2025) — <a href="https://www.ird.gov.lk/en/publications/APIT_Tax_Tables/2025-2026/Table%20-%207/08.%20APIT_2526_Table_07_Text.pdf" target="_blank" rel="noopener">Table 07 PDF</a></li>
+        <li id="s7">Employees' Provident Fund Act No. 15 of 1958 — s.10, 11, 13, 16, 20, 47 — <a href="https://www.cbsl.gov.lk/sites/default/files/cbslweb_documents/laws/acts/en/epf_act.pdf" target="_blank" rel="noopener">cbsl.gov.lk</a></li>
+        <li id="s8">Employees' Trust Fund Act No. 46 of 1980 — s.16, 27, 30, 44 — <a href="https://etfb.lk/wp-content/uploads/2021/03/ETF-Act.pdf" target="_blank" rel="noopener">etfb.lk</a></li>
+        <li id="s9">Shop and Office Employees Act No. 19 of 1954 and Regulations — s.3, 7, 19; Regs. 6–9 — <a href="https://most.gov.lk/web/images/pdf/acts/shop_and_office_employees_act.pdf" target="_blank" rel="noopener">most.gov.lk</a></li>
+        <li id="s10">Payment of Gratuity Act No. 12 of 1983 — s.5, 6, 20 — <a href="https://lankalaw.net/wp-content/uploads/2025/02/1983Y0V0C12A.html" target="_blank" rel="noopener">lankalaw.net</a></li>
+        <li id="s11">National Minimum Wage of Workers (Amendment) Act No. 11 of 2025 — <a href="https://www.parliament.lk/uploads/acts/gbills/english/6388.pdf" target="_blank" rel="noopener">parliament.lk</a></li>
+        <li id="s12">Budgetary Relief Allowance of Workers (Amendment) Acts No. 9 of 2025 (amends Act No. 36 of 2005) and No. 10 of 2025 (amends Act No. 4 of 2016) — <a href="https://www.parliament.lk/uploads/acts/gbills/english/6390.pdf" target="_blank" rel="noopener">Act 9</a> · <a href="https://www.parliament.lk/uploads/acts/gbills/english/6387.pdf" target="_blank" rel="noopener">Act 10</a></li>
+        <li id="s13">Budget Speech 2026 — <a href="https://media.gov.lk/media-gallery/latest-news/3497-full-budget-speech-2026" target="_blank" rel="noopener">media.gov.lk</a></li>
+        <li id="s14">IRD notice SEC/PN/IT/2026/02 (8 Jun 2026) on Inland Revenue (Amendment) Act No. 11 of 2026 — <a href="https://www.ird.gov.lk/en/Lists/Latest%20News%20%20Notices/Attachments/788/SEC_PN_IT_2026-02.pdf" target="_blank" rel="noopener">ird.gov.lk</a></li>
+        <li id="s15">IRD Tax Chart 2025/26 (terminal benefit rates, reliefs) — <a href="https://www.ird.gov.lk/en/publications/SitePages/tax_chart_2526.aspx?menuid=1404" target="_blank" rel="noopener">ird.gov.lk</a></li>
+      </ol>
+      <p class="disclaimer">This is an estimate for planning, not tax or legal advice. APIT is a withholding. Reliefs such as solar panels (up to Rs 600,000) and approved donations are claimed on the annual return, not through payroll. Gratuity and other terminal benefits are taxed separately under Table 03. Wages Board trades may have higher minimum rates. Check edge cases with the IRD or a licensed tax practitioner.</p>
+      <p class="cite" style="margin-top:12px"><a href="https://naweenkavinda.github.io/portfolio/">&larr; More projects in my portfolio</a></p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const r2 = x => Math.round(x*100)/100;
+const fmt = n => (n<0?'−':'') + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => Math.round(n).toLocaleString('en-US');
+const pct = n => (n*100).toFixed(1).replace(/\.0$/,'') + '%';
+
+/* ---- IRD APIT tables (Y/A 2025/26 onwards) ---- */
+const RELIEF_M = 150000, RELIEF_Y = 1800000;
+// Table 01 — residents & non-resident citizens, monthly regular profits
+const T1 = [[150000,0,0],[700000/3,0.06,9000],[275000,0.18,37000],[950000/3,0.24,53500],[1075000/3,0.30,72500],[Infinity,0.36,94000]];
+// Table 04 — non-resident non-citizens, no relief
+const T4 = [[250000/3,0.06,0],[125000,0.18,10000],[500000/3,0.24,17500],[625000/3,0.30,27500],[Infinity,0.36,40000]];
+// Table 02/05 annual r & K — residents
+const A_RES = [[1800000,0,0],[2800000,0.06,108000],[3300000,0.18,444000],[3800000,0.24,642000],[4300000,0.30,870000],[Infinity,0.36,1128000]];
+// Annual — non-resident non-citizens
+const A_NR = [[1000000,0.06,0],[1500000,0.18,120000],[2000000,0.24,210000],[2500000,0.30,330000],[Infinity,0.36,480000]];
+const look = (tbl,x) => { for(const row of tbl){ if(x<=row[0]) return row; } return tbl[tbl.length-1]; };
+const taxBy = (tbl,x) => { if(x<=0) return 0; const [,r,k]=look(tbl,x); return Math.max(0, r*x - k); };
+
+// Table 07 — secondary employment flat rate
+function secRate(primary, secondary, declared, resident){
+  if(!resident || !declared) return 0.36;
+  const combined = primary + secondary;
+  if(combined < 150000) return 0;
+  if(combined <= 700000/3) return 0.06;
+  if(primary <= 150000) return 0.06;
+  if(primary <= 700000/3) return 0.18;
+  if(primary <= 275000) return 0.24;
+  if(primary <= 316666) return 0.30;
+  return 0.36;
+}
+
+const num = id => { const v = parseFloat($(id).value); return isFinite(v) && v>0 ? v : 0; };
+function read(){
+  return {
+    basic:num('basic'), cola:num('cola'), fixed:num('fixed'), fixedEpf:$('fixedEpf').checked, other:num('other'),
+    otHours:num('otHours'), otRate:parseFloat($('otRate').value), bonus:num('bonus'),
+    vehicle:parseFloat($('vehicle').value), housing:parseFloat($('housing').value), phone:num('phone'),
+    residency:$('residency').value, job:$('job').value, primaryPay:num('primaryPay'), secDecl:$('secDecl').checked,
+    epfOn:$('epfOn').checked, epfEe:Math.max(8,num('epfEe'))/100, epfEr:Math.max(12,num('epfEr'))/100,
+    gratOn:$('gratOn').checked, otherDed:num('otherDed')
+  };
+}
+
+function calc(i){
+  const o = {i};
+  o.epfBase = i.basic + i.cola + (i.fixedEpf ? i.fixed : 0);
+  o.otHourly = (i.basic + i.cola)/240;
+  o.ot = r2(o.otHourly * i.otRate * i.otHours);
+  o.regularCash = i.basic + i.cola + i.fixed + i.other + o.ot;
+  o.housingVal = r2((i.basic + i.cola + i.fixed) * i.housing);
+  o.phoneVal = r2(i.phone * 0.5);
+  o.ncb = i.vehicle + o.housingVal + o.phoneVal;
+  o.M = o.regularCash + o.ncb;                       // monthly regular profit for APIT
+  o.cashGross = o.regularCash + i.bonus;
+  const resident = i.residency !== 'nrnc';
+  const relief = i.residency === 'res' || i.residency === 'nrc';
+  if(i.job === 'secondary'){
+    o.method = 'T07';
+    o.rate = secRate(i.primaryPay, o.M + i.bonus, i.secDecl, i.residency==='res');
+    o.apitReg = r2(o.M * o.rate);
+    o.apitBonus = r2(i.bonus * o.rate);
+    o.marginal = o.rate;
+  } else {
+    const mTbl = relief ? T1 : T4, aTbl = relief ? A_RES : A_NR;
+    o.method = relief ? 'T01' : 'T04';
+    o.apitReg = r2(taxBy(mTbl, o.M));
+    o.apitBonus = i.bonus > 0 ? r2(Math.max(0, taxBy(aTbl, 12*o.M + i.bonus) - 12*taxBy(mTbl, o.M))) : 0;
+    o.marginal = o.M <= (relief?RELIEF_M:0) ? 0 : look(mTbl, o.M)[1];
+    if(i.bonus>0){ o.bonusMarginal = look(aTbl, 12*o.M + i.bonus)[1]; }
+  }
+  o.apit = r2(o.apitReg + o.apitBonus);
+  o.epfEeAmt = i.epfOn ? r2(o.epfBase * i.epfEe) : 0;
+  o.epfErAmt = i.epfOn ? r2(o.epfBase * i.epfEr) : 0;
+  o.etfAmt   = i.epfOn ? r2(o.epfBase * 0.03) : 0;
+  o.grat     = i.gratOn ? r2(o.epfBase / 24) : 0;
+  o.deductions = r2(o.epfEeAmt + o.apit + i.otherDed);
+  o.net = r2(o.cashGross - o.deductions);
+  o.cost = r2(o.cashGross + o.ncb + o.epfErAmt + o.etfAmt + o.grat);
+  o.yearCost = r2((o.cost - i.bonus) * 12 + i.bonus);
+  o.effTax = (o.M + i.bonus) > 0 ? o.apit / (o.M + i.bonus) : 0;
+  o.relief = relief; o.residentForTax = i.residency==='res';
+  return o;
+}
+
+/* ---- Rendering ---- */
+function row(label, amt, cls){ return `<span class="lbl">${label}</span><span class="amt ${cls||''}">${amt}</span>`; }
+function renderSlip(o){
+  const i=o.i; let h='';
+  h += `<span class="sec">Earnings</span>`;
+  h += row('Basic salary', fmt(i.basic));
+  if(i.cola) h += row('Cost-of-living allowance', fmt(i.cola));
+  if(i.fixed) h += row(`Fixed allowances ${i.fixedEpf?'':'<em>(non-EPF)</em>'}`, fmt(i.fixed));
+  if(i.other) h += row('Other taxable allowances <em>(non-EPF)</em>', fmt(i.other));
+  if(o.ot) h += row(`Overtime <em>${i.otHours} h × ${fmt(o.otHourly)} × ${i.otRate}</em>`, fmt(o.ot));
+  if(i.bonus) h += row('Bonus / lump sum', fmt(i.bonus));
+  h += `<span class="lbl tot">Gross cash pay</span><span class="amt tot">${fmt(o.cashGross)}</span>`;
+  h += `<span class="sec">Deductions</span>`;
+  if(i.epfOn) h += row(`EPF employee ${pct(i.epfEe)} <em>of ${fmt0(o.epfBase)}</em>`, fmt(-o.epfEeAmt), 'neg');
+  h += row(`APIT <em>${o.method==='T07'?'Table 07 @ '+pct(o.rate):o.method==='T04'?'Table 04':'Table 01'}</em>`, fmt(-o.apitReg), 'neg');
+  if(i.bonus) h += row('APIT on bonus <em>Table 02</em>', fmt(-o.apitBonus), 'neg');
+  if(i.otherDed) h += row('Other deductions', fmt(-i.otherDed), 'neg');
+  h += `<span class="lbl tot">Total deductions</span><span class="amt tot neg">${fmt(-o.deductions)}</span>`;
+  h += `<span class="sec">Employer contributions <em style="text-transform:none;letter-spacing:0">(not deducted)</em></span>`;
+  if(i.epfOn){
+    h += row(`EPF employer ${pct(i.epfEr)}`, fmt(o.epfErAmt), 'muted');
+    h += row('ETF employer 3%', fmt(o.etfAmt), 'muted');
+  } else h += row('Not covered by EPF/ETF', '—', 'muted');
+  if(o.ncb){
+    h += `<span class="sec">Taxable benefits in kind</span>`;
+    if(i.vehicle) h += row('Vehicle', fmt(i.vehicle), 'muted');
+    if(o.housingVal) h += row(`Housing ${pct(i.housing)}`, fmt(o.housingVal), 'muted');
+    if(o.phoneVal) h += row('Phone (50% of bill)', fmt(o.phoneVal), 'muted');
+  }
+  $('slipRows').innerHTML = h;
+  $('slipNet').textContent = 'Rs ' + fmt(o.net);
+  const res = {res:'Resident',nrc:'Non-resident citizen',nrnc:'Non-resident foreign national'}[i.residency];
+  $('slipSub').textContent = `Monthly · LKR · ${res} · ${i.job==='secondary'?'secondary':'primary'} employment`;
+}
+
+function renderHead(o){
+  $('hNet').textContent = 'Rs ' + fmt0(o.net);
+  $('hNetS').textContent = o.cashGross>0 ? `${pct(o.net/o.cashGross)} of gross cash pay` : '';
+  $('hTax').textContent = 'Rs ' + fmt0(o.apit);
+  $('hTaxS').textContent = `Effective ${pct(o.effTax)} · marginal ${pct(o.i.bonus>0 && o.bonusMarginal!==undefined ? o.bonusMarginal : o.marginal)}`;
+  const save = o.epfEeAmt + o.epfErAmt + o.etfAmt;
+  $('hSave').textContent = 'Rs ' + fmt0(save);
+  $('hSaveS').textContent = o.i.epfOn ? `Your 8% plus your employer's ${pct(o.i.epfEr)} + 3%` : 'Not covered by EPF/ETF';
+  // employer headline
+  $('hCost').textContent = 'Rs ' + fmt0(o.cost);
+  $('hCostS').textContent = o.cashGross>0 ? `${(o.cost/o.cashGross).toFixed(3)}× gross cash pay` : '';
+  $('hYear').textContent = 'Rs ' + fmt0(o.yearCost);
+  $('hYearS').textContent = o.i.bonus ? '12 months, bonus counted once' : '12 months at this pay';
+  const on = o.epfErAmt + o.etfAmt + o.grat;
+  $('hOn').textContent = 'Rs ' + fmt0(on);
+  $('hOnS').textContent = o.cashGross>0 ? `+${pct(on/o.cashGross)} over gross: EPF, ETF, gratuity` : '';
+}
+
+function renderSavings(o){
+  const i=o.i;
+  if(!i.epfOn){ $('saveRows').innerHTML = '<span>Not covered by EPF/ETF</span><span class="a">—</span>'; $('saveNote').textContent=''; return; }
+  const epf = o.epfEeAmt + o.epfErAmt;
+  $('saveRows').innerHTML =
+    `<span>EPF: your contribution (${pct(i.epfEe)})</span><span class="a">${fmt(o.epfEeAmt)}</span>`+
+    `<span>EPF: employer contribution (${pct(i.epfEr)})</span><span class="a">${fmt(o.epfErAmt)}</span>`+
+    `<span class="tot">EPF credited this month</span><span class="a tot">${fmt(epf)}</span>`+
+    `<span>ETF: employer contribution (3%)</span><span class="a">${fmt(o.etfAmt)}</span>`+
+    `<span class="tot">Saved for you each year</span><span class="a tot">${fmt((epf+o.etfAmt)*12)}</span>`;
+  $('saveNote').textContent = `Worked on EPF earnings of Rs ${fmt0(o.epfBase)}. Overtime and bonuses are not counted. Interest is added each year at the rate the fund declares. EPF is paid out on retirement (age 55 for men, 50 for women) or on earlier qualifying events. Approved-fund payouts are exempt from income tax.`;
+}
+
+function renderRemit(o){
+  const i=o.i, rows=[];
+  if(i.epfOn) rows.push(['EPF (8% + '+pct(i.epfEr)+')','Central Bank of Sri Lanka, EPF Dept.', o.epfEeAmt+o.epfErAmt,'Last day of next month','EPF Act s.10']);
+  if(i.epfOn) rows.push(['ETF (3%)','Employees\' Trust Fund Board', o.etfAmt,'Last day of next month','ETF Act s.16']);
+  rows.push(['APIT withheld','Inland Revenue Department', o.apit,'15th of next month','IRA s.86(1)']);
+  rows.push(['Net salary','Employee', o.net,'Within 10 days of month end','S&O Act s.19']);
+  if(i.otherDed) rows.push(['Other deductions','As authorised by employee', i.otherDed,'As agreed','S&O Reg. 19']);
+  const total = rows.reduce((s,r)=>s+r[2],0);
+  $('remitTbl').innerHTML = `<thead><tr><th>Payment</th><th>Amount</th><th>Due</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr><td style="white-space:normal"><b style="font-family:var(--f-body)">${r[0]}</b><br><span class="cite">${r[1]} · ${r[4]}</span></td><td>${fmt(r[2])}</td><td style="font-family:var(--f-body);white-space:normal">${r[3]}</td></tr>`).join('')+
+    `<tr><td><b>Cash out this month</b></td><td><b>${fmt(total)}</b></td><td></td></tr></tbody>`+
+    `<tfoot><tr><td colspan="3" style="white-space:normal;font-family:var(--f-body);color:var(--muted);font-size:12px;text-align:left">Late EPF/ETF is surcharged by days in arrears: 5% (≤10 days), 15% (≤1 month), 20% (≤3 months), 30% (≤6 months), 40% (≤12 months), 50% beyond (EPF s.16, ETF s.27). Late returns add 1% a month (EPF s.31A, ETF s.37A).</td></tr></tfoot>`;
+}
+
+function renderGratuity(o){
+  const i=o.i, yrs = Math.floor(num('years'));
+  const sal = o.epfBase, amt = 0.5*sal*yrs, eligible = i.gratOn && yrs>=5;
+  $('gratRows').innerHTML =
+    `<span>Monthly salary for gratuity (basic + COLA + similar allowances)</span><span class="a">${fmt(sal)}</span>`+
+    `<span>× ½ month × ${yrs} completed year${yrs===1?'':'s'}</span><span class="a">${fmt(amt)}</span>`+
+    `<span class="tot">${eligible?'Gratuity payable if they leave today':'Payable today'}</span><span class="a tot">${fmt(eligible?amt:0)}</span>`+
+    `<span>Provision you are building each month</span><span class="a">${fmt(o.grat)}</span>`;
+  let n;
+  if(!i.gratOn) n = 'The Act applies only to employers who had 15 or more workmen on any day in the 12 months before termination. Tick the box in the inputs if this applies to you.';
+  else if(yrs<5) n = `Not yet payable. The employee needs 5 completed years, and has ${5-yrs} more to go. Part years never count.`;
+  else n = `Must be paid within 30 days of termination. Late payment is surcharged at 10% to 30% depending on the delay (s.5(4)). The employee pays no tax on retirement benefits up to Rs 10M, 6% on the next Rs 10M and 12% above that. The employer withholds 12% under APIT Table 03 only above Rs 5M.`;
+  $('gratNote').textContent = n;
+}
+
+const SEG = [
+  ['net','Employee take-home','--seg-net'],
+  ['apit','APIT to Inland Revenue','--seg-apit'],
+  ['epfee','EPF — employee 8% share','--seg-epfee'],
+  ['epfer','EPF — employer share','--seg-epfer'],
+  ['etf','ETF — employer 3%','--seg-etf'],
+  ['grat','Gratuity accrual (provision)','--seg-grat'],
+  ['ncb','Benefits in kind (taxable value)','--seg-ncb'],
+  ['oth','Other deductions','--seg-grat']
+];
+function renderLedger(o){
+  const v = {net:o.net, apit:o.apit, epfee:o.epfEeAmt, epfer:o.epfErAmt, etf:o.etfAmt, grat:o.grat, ncb:o.ncb, oth:o.i.otherDed};
+  const total = o.cost || 1;
+  let bar='', leg='';
+  for(const [k,label,c] of SEG){
+    if(!v[k] || v[k] <= 0) continue;
+    bar += `<i style="flex:0 0 ${(v[k]/total*100).toFixed(3)}%;background:var(${c})" title="${label}"></i>`;
+    leg += `<span><span class="sw" style="background:var(${c})"></span>${label}</span><span class="a">${fmt0(v[k])}</span><span class="p">${pct(v[k]/total)}</span>`;
+  }
+  leg += `<span class="tot">Total employer cost</span><span class="a tot">${fmt0(o.cost)}</span><span class="p tot">100%</span>`;
+  $('costBar').innerHTML = bar; $('costLegend').innerHTML = leg;
+  $('ledgerNote').textContent = (o.i.epfOn ? 'The employer\'s EPF and ETF contributions cannot be recovered from pay (EPF Act s.20, ETF Act s.30). ' : '') +
+    (o.ncb ? 'Benefits in kind are shown at their IRD taxable value. The employer\'s real cost of a car or house is usually higher. ' : '') +
+    (o.grat ? 'Gratuity is paid only after 5 years. It is shown here as a monthly provision (½ month per year).' : '');
+}
+
+function renderBands(o){
+  const i=o.i, tbl=$('bandTbl');
+  if(o.method==='T07'){
+    const pp = i.primaryPay, comb = pp + o.M + i.bonus;
+    const secIdx = (i.residency!=='res' || !i.secDecl) ? 7 : comb < 150000 ? 0 : comb <= 700000/3 ? 1 :
+      pp <= 150000 ? 2 : pp <= 700000/3 ? 3 : pp <= 275000 ? 4 : pp <= 316666 ? 5 : 6;
+    $('bandSub').textContent = `Secondary employment: APIT Table 07 applies one flat rate of ${pct(o.rate)} to all of this salary (Rs ${fmt0(o.M)}${i.bonus?' plus the bonus':''}). The rate depends on primary-job pay of Rs ${fmt0(i.primaryPay)}.`;
+    tbl.innerHTML = `<thead><tr><th>Primary-job monthly pay</th><th>Rate on whole secondary pay</th></tr></thead><tbody>` +
+      [['Combined pay below 150,000',0],['Combined pay 150,000 – 233,333',0.06],['Combined above 233,333 · primary 0 – 150,000',0.06],['Combined above 233,333 · primary 150,001 – 233,333',0.18],['Combined above 233,333 · primary 233,334 – 275,000',0.24],['Combined above 233,333 · primary 275,001 – 316,666',0.30],['Combined above 233,333 · primary 316,667 and above',0.36],['No declaration, or non-resident',0.36]]
+      .map(([l,r],k)=>`<tr class="${k===secIdx?'on':'off'}"><td>${l}</td><td>${pct(r)}</td></tr>`).join('') + `</tbody>`;
+    return;
+  }
+  const relief = o.relief ? RELIEF_M : 0;
+  const widths = [1000000/12, 500000/12, 500000/12, 500000/12, Infinity];
+  const rates = [0.06,0.18,0.24,0.30,0.36];
+  let rest = Math.max(0, o.M - relief), start = relief, rows='';
+  if(o.relief){
+    const inRelief = Math.min(o.M, relief);
+    rows += `<tr class="${o.M>0?'on':'off'}"><td>Personal relief 0 – 150,000</td><td>0%</td><td>${fmt(inRelief)}</td><td><div class="meter"><i style="width:${(inRelief/relief*100).toFixed(1)}%"></i></div></td><td>0.00</td></tr>`;
+  }
+  let total=0;
+  widths.forEach((w,idx)=>{
+    const amt = Math.min(rest, w); rest -= amt;
+    const tax = amt*rates[idx]; total += tax;
+    const end = start + w;
+    const lbl = isFinite(w) ? `${fmt0(start)} – ${fmt0(end)}` : `Above ${fmt0(start)}`;
+    const fill = isFinite(w) ? amt/w*100 : (amt>0?100:0);
+    rows += `<tr class="${amt>0?'on':'off'}"><td>${lbl}</td><td>${pct(rates[idx])}</td><td>${fmt(amt)}</td><td><div class="meter"><i style="width:${fill.toFixed(1)}%"></i></div></td><td>${fmt(tax)}</td></tr>`;
+    start = end;
+  });
+  rows += `<tr><td><b>APIT on monthly pay</b></td><td></td><td>${fmt(o.M)}</td><td></td><td><b>${fmt(total)}</b></td></tr>`;
+  tbl.innerHTML = `<thead><tr><th>Monthly band (Rs)</th><th>Rate</th><th>Your pay in band</th><th>Fill</th><th>Tax</th></tr></thead><tbody>${rows}</tbody>`;
+  const mTbl = o.relief?T1:T4, [,r,k] = look(mTbl,o.M);
+  let s = `Monthly regular profit M = Rs ${fmt(o.M)}`+(o.ncb?` (incl. Rs ${fmt0(o.ncb)} of benefits in kind)`:'')+`. `;
+  s += o.apitReg>0 ? `IRD ${o.method==='T01'?'Table 01':'Table 04'} shortcut: ${pct(r)} × ${fmt(o.M)} − ${fmt0(k)} = Rs ${fmt(o.apitReg)}. The band-by-band working below gives the same answer.` : `M is within the tax-free band, so no APIT is withheld.`;
+  if(i.bonus) s += ` Bonus: D = 12 × ${fmt0(o.M)} + ${fmt0(i.bonus)} = ${fmt0(12*o.M+i.bonus)}. Tax on the bonus = Rs ${fmt(o.apitBonus)} (Table 02).`;
+  $('bandSub').textContent = s;
+}
+
+function renderChecks(o){
+  const i=o.i, er=[], ee=[], out=er;
+  const wageFloor = i.basic + i.cola + i.fixed;
+  if(wageFloor < 30000) out.push(['bad','Below the national minimum wage',`Basic plus fixed allowances is Rs ${fmt0(wageFloor)}. The legal floor has been Rs 30,000 a month (Rs 1,200 a day) since 1 Jan 2026, under the National Minimum Wage (Amendment) Act No. 11 of 2025. Wages Board trades may have a higher floor.`]);
+  else out.push(['good','Meets the national minimum wage','Rs 30,000 a month from 1 Jan 2026. The former budgetary relief allowance is now part of this figure.']);
+  if(i.otHours > 52) out.push(['warn','Overtime above the legal maximum',`${i.otHours} hours is more than 12 hours a week (about 52 a month). Shop & Office Regulations, Reg. 6.`]);
+  else if(i.otHours>0) out.push(['good','Overtime within 12 hours a week',`Paid at ${i.otRate}× the hourly rate of Rs ${fmt(o.otHourly)}, which is (basic + COLA) ÷ 240 under Reg. 8(b).`]);
+  if(i.otherDed > 0){
+    const cap = 0.6*o.cashGross;
+    out.push([i.otherDed>cap?'bad':'good', i.otherDed>cap?'Non-statutory deductions exceed 60% of pay':'Non-statutory deductions within the 60% limit', `Shop & Office Act s.19 caps authorised deductions at 60% of pay due, which is Rs ${fmt0(cap)} here. APIT and EPF do not count towards it. The cap is 50% under the Wages Boards Ordinance.`]);
+  }
+  if(!i.epfOn) out.push(['warn','No EPF or ETF','Excluded categories are narrow: a spouse employed by the employer, partners, casual day or job work, and staff in a foreign pension fund. Nearly every other employee must be covered.']);
+  if(i.epfEe>0.08 || i.epfEr>0.12) out.push(['info','Higher EPF rates elected','Allowed under EPF Act s.11 by joint notice to the Commissioner. Once it takes effect the election cannot be revoked.']);
+  if(i.bonus>0 && o.i.job!=='secondary') ee.push(['info','Bonus taxed on the whole year','Table 02 assumes the same salary every month this year and no earlier lump sums. Payroll will true up in March using the cumulative method in Table 05.']);
+  if(i.residency==='nrnc') ee.push(['info','Final tax for foreign non-residents','Table 04 applies with no personal relief. APIT is the final tax under IRA s.88(1A).']);
+  else if(i.job==='secondary') ee.push([i.secDecl?'info':'warn', i.secDecl?'Second job may need a tax return':'No declaration: 36% withheld','Table 07 is a flat withholding rate. If the two jobs together owe more tax, the employee settles it on the annual return.']);
+  else ee.push(['info','Usually no tax return needed','From Y/A 2025/26 a return is not required if employment income is fully covered by APIT and interest is Rs 5,000 or less, with no quarterly instalments or final tax payments due. To claim reliefs such as solar panels (up to Rs 600k) or donations, the employee must file a return.']);
+  ee.push(['info','EPF 8% does not reduce taxable pay','APIT is worked out on gross pay. IRA s.10(1)(a) allows no deductions from employment income. The employer\'s 12% EPF and 3% ETF are not taxable to the employee (IRA s.5).']);
+  if(wageFloor < 30000) ee.unshift(er[0]);
+  if(i.epfOn && i.epfEe>0.08) ee.push(['info','Higher EPF rate elected',`You contribute ${pct(i.epfEe)} instead of 8%. This lowers your take-home pay and raises your EPF balance by the same amount.`]);
+  const li = list => list.map(([k,t,d])=>`<li><span class="pill ${k}">${{good:'OK',warn:'Check',bad:'Breach',info:'Note'}[k]}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('');
+  $('checksEr').innerHTML = li(er);
+  $('checksEe').innerHTML = li(ee);
+}
+
+let last;
+function render(){
+  $('secBox').hidden = $('job').value !== 'secondary';
+  const o = calc(read()); last = o;
+  $('otNote').textContent = `Hourly rate = (basic + COLA) ÷ 240 = Rs ${fmt(o.otHourly)} → overtime Rs ${fmt(o.ot)}`;
+  renderHead(o); renderSlip(o); renderSavings(o); renderLedger(o); renderRemit(o); renderGratuity(o); renderBands(o); renderChecks(o);
+}
+
+/* Tabs: Employee / Employer pages */
+function showTab(name){
+  ['employee','employer'].forEach(t=>{
+    $('page-'+t).hidden = t!==name;
+    $('tab-'+t).setAttribute('aria-selected', t===name ? 'true' : 'false');
+  });
+  try{ localStorage.setItem('slpay-tab', name); }catch(e){}
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+(function(){
+  let t = (location.hash||'').replace('#','');
+  if(t!=='employee' && t!=='employer'){ try{ t = localStorage.getItem('slpay-tab'); }catch(e){ t=null; } }
+  showTab(t==='employer' ? 'employer' : 'employee');
+})();
+$('years').addEventListener('input', ()=>{ if(last) renderGratuity(last); });
+
+/* Budget solve: highest basic whose employer cost fits */
+$('solveBudget').addEventListener('click', ()=>{
+  const budget = num('budget'), base = read();
+  const costAt = b => calc(Object.assign({}, base, {basic:b})).cost;
+  if(costAt(0) > budget){ $('budOut').innerHTML = `The other pay and benefits already cost Rs <b>${fmt0(costAt(0))}</b>, which is over this budget.`; return; }
+  let lo=0, hi=1000000; while(costAt(hi) <= budget && hi < 1e9) hi*=2;
+  for(let k=0;k<80;k++){ const mid=(lo+hi)/2; if(costAt(mid)<=budget) lo=mid; else hi=mid; }
+  const b = Math.floor(lo);
+  const o = calc(Object.assign({}, base, {basic:b}));
+  $('budOut').innerHTML = `A basic salary of up to <b>Rs ${fmt0(b)}</b> costs Rs <b>${fmt0(o.cost)}</b> a month. The employee takes home Rs <b>${fmt0(o.net)}</b>. <button type="button" class="btn ghost" id="applyBud" style="padding:4px 10px;margin-left:6px">Use this salary</button>`;
+  $('applyBud').addEventListener('click', ()=>{ $('basic').value = b; render(); });
+});
+
+/* Reverse solve: basic salary for a target net */
+$('solve').addEventListener('click', ()=>{
+  const target = num('target'), base = read();
+  const netAt = b => calc(Object.assign({}, base, {basic:b})).net;
+  if(netAt(0) >= target){ $('revOut').innerHTML = `Other pay inputs already give Rs <b>${fmt0(netAt(0))}</b> with no basic salary.`; return; }
+  let lo=0, hi=1000000; while(netAt(hi) < target && hi < 1e9) hi*=2;
+  for(let k=0;k<80;k++){ const mid=(lo+hi)/2; if(netAt(mid)<target) lo=mid; else hi=mid; }
+  const b = Math.ceil(hi);
+  const o = calc(Object.assign({}, base, {basic:b}));
+  $('revOut').innerHTML = `A basic salary of <b>Rs ${fmt0(b)}</b> gives a take-home of Rs <b>${fmt0(o.net)}</b>. Gross cash pay is Rs <b>${fmt0(o.cashGross)}</b> and the employer's cost is Rs <b>${fmt0(o.cost)}</b>. <button type="button" class="btn ghost" id="applyRev" style="padding:4px 10px;margin-left:6px">Use this salary</button>`;
+  $('applyRev').addEventListener('click', ()=>{ $('basic').value = b; render(); });
+});
+
+document.querySelectorAll('[data-copy]').forEach(btn=>btn.addEventListener('click', ()=>{
+  const o=last; if(!o) return;
+  const who = btn.dataset.copy, label = btn.textContent;
+  const t = (who==='employee' ? [
+    'Sri Lanka payslip (monthly, LKR)',
+    `Gross cash pay: ${fmt(o.cashGross)}`,
+    o.i.epfOn ? `EPF employee ${pct(o.i.epfEe)}: -${fmt(o.epfEeAmt)}` : null,
+    `APIT: -${fmt(o.apit)}`,
+    o.i.otherDed ? `Other deductions: -${fmt(o.i.otherDed)}` : null,
+    `Take-home: ${fmt(o.net)}`,
+    o.i.epfOn ? `Credited to EPF/ETF: ${fmt(o.epfEeAmt+o.epfErAmt+o.etfAmt)}` : null
+  ] : [
+    'Sri Lanka employer cost (monthly, LKR)',
+    `Gross cash pay: ${fmt(o.cashGross)}`,
+    o.ncb ? `Benefits in kind (taxable value): ${fmt(o.ncb)}` : null,
+    o.i.epfOn ? `Employer EPF ${pct(o.i.epfEr)}: ${fmt(o.epfErAmt)}` : null,
+    o.i.epfOn ? `Employer ETF 3%: ${fmt(o.etfAmt)}` : null,
+    o.grat ? `Gratuity provision: ${fmt(o.grat)}` : null,
+    `Total monthly cost: ${fmt(o.cost)}`,
+    `Annual cost: ${fmt(o.yearCost)}`
+  ]).concat(['Rules: IRD APIT tables 2025/26 onwards; EPF Act s.10; ETF Act s.16.']).filter(Boolean).join('\n');
+  const out = who==='employee' ? $('revOut') : $('budOut');
+  navigator.clipboard.writeText(t).then(()=>{btn.textContent='Copied';setTimeout(()=>btn.textContent=label,1500);})
+    .catch(()=>{ out.textContent = t; });
+}));
+
+const PRESETS = {
+  min:{basic:30000,cola:0,fixed:0,other:0,otHours:0,bonus:0,vehicle:'0',housing:'0',phone:0},
+  mid:{basic:220000,cola:0,fixed:30000,other:0,otHours:0,bonus:0,vehicle:'0',housing:'0',phone:0},
+  senior:{basic:520000,cola:0,fixed:80000,other:0,otHours:0,bonus:0,vehicle:'40000',housing:'0',phone:8000},
+  bonus:{basic:170000,cola:0,fixed:0,other:0,otHours:0,bonus:600000,vehicle:'0',housing:'0',phone:0}
+};
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+  const p=PRESETS[b.dataset.preset];
+  for(const k in p) $(k).value=p[k];
+  $('residency').value='res'; $('job').value='primary'; $('epfOn').checked=true; $('fixedEpf').checked=true;
+  render();
+}));
+
+$('form').addEventListener('input', render);
+$('form').addEventListener('change', render);
+$('form').addEventListener('submit', e=>e.preventDefault());
+render();
+})();
+</script>
+
+</body>
+</html>
